@@ -820,6 +820,21 @@
     styled-components "^5.3.9"
     uuid "^9.0.0"
 
+"@pcd/secret-phrase-pcd@https://gitpkg.now.sh/Mach-34/zupass/packages/secret-phrase-pcd?main":
+  version "0.1.0"
+  resolved "https://gitpkg.now.sh/Mach-34/zupass/packages/secret-phrase-pcd?main#4afa81e5cf356fcb1f6e054047eb278c7dbb3291"
+  dependencies:
+    "@pcd/passport-ui" "0.8.0"
+    "@pcd/pcd-types" "0.8.0"
+    "@pcd/rsa-pcd" "0.3.0"
+    "@zk-kit/groth16" "^0.3.0"
+    chai "^4.3.7"
+    json-bigint "^1.0.0"
+    node-rsa "^1.1.1"
+    react "^18.2.0"
+    styled-components "^5.3.9"
+    uuid "^9.0.0"
+
 "@pcd/semaphore-group-pcd@0.8.0":
   version "0.8.0"
   resolved "https://registry.yarnpkg.com/@pcd/semaphore-group-pcd/-/semaphore-group-pcd-0.8.0.tgz#ac8074d987ae17c5410a7df4fb3a7b8a2a9d8930"
@@ -1272,6 +1287,14 @@
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@zk-kit/groth16/-/groth16-0.1.0.tgz#bbde6ad0b74c0f422be92ea3c077a433683271f8"
   integrity sha512-ilFDztfBAUkC08HNwpwJxDAHromACBBizH/ouKXOeCnlaNw3zwetuhJVwBS+urAzNwu3TU94OcOmAV1JY83mLQ==
+  dependencies:
+    circom_runtime "0.1.24"
+    ffjavascript "0.2.60"
+
+"@zk-kit/groth16@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@zk-kit/groth16/-/groth16-0.3.0.tgz#74240beb26e98e4ea3546159108ca968ed7c019b"
+  integrity sha512-rvTrzMcpxFy0lkiIveI5HHovVbyBQ+eDuh/RGAb0SHkzIxJ8kiPjSXvRXUmEdq278ZdhHvrCZSz5J53oIBuoFw==
   dependencies:
     circom_runtime "0.1.24"
     ffjavascript "0.2.60"

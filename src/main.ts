@@ -9,4 +9,6 @@ export const ZUPASS_PUBLIC_KEY = JSON.parse(
   process.env.ZUPASS_PUBLIC_KEY as string
 );
 
+// console.log("ZUPASS_PUBLIC_KEY", ZUPASS_PUBLIC_KEY);
+
 new Application().start({ port: parseInt(process.env.PORT ?? "3100") });

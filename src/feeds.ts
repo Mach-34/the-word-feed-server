@@ -1,8 +1,6 @@
 import { EdDSAPCDPackage } from "@pcd/eddsa-pcd";
 import {
-  EdDSATicketPCD,
-  EdDSATicketPCDPackage,
-  ITicketData
+  EdDSATicketPCDPackage
 } from "@pcd/eddsa-ticket-pcd";
 import { EmailPCDPackage } from "@pcd/email-pcd";
 import {
@@ -19,10 +17,11 @@ import {
   ReplaceInFolderPermission
 } from "@pcd/pcd-collection";
 import { ArgumentTypeName, SerializedPCD } from "@pcd/pcd-types";
+import { SecretPhrasePCD, SecretPhrasePCDPackage } from "@pcd/secret-phrase-pcd";
 import { SemaphoreSignaturePCDPackage } from "@pcd/semaphore-signature-pcd";
 import _ from "lodash";
 import path from "path";
-import { Ticket, loadTickets } from "./config";
+import { SecretPhrase, loadSecretPhrases } from "./config";
 import { ZUPASS_PUBLIC_KEY } from "./main";
 
 const fullPath = path.join(__dirname, "../artifacts/");
@@ -37,8 +36,8 @@ EdDSATicketPCDPackage.init?.({});
 export let feedHost: FeedHost;
 
 export async function initFeedHost() {
-  const tickets = await loadTickets();
-  const folders = Object.keys(tickets);
+  const phrases = await loadSecretPhrases();
+  const folders = Object.keys(phrases);
   feedHost = new FeedHost(
     [
       {
@@ -70,12 +69,14 @@ export async function initFeedHost() {
             throw new Error(`Missing credential`);
           }
           const { payload } = await verifyFeedCredential(req.pcd);
-
+          console.log("PAYLOAD::::: ", payload)
           if (payload?.pcd && payload.pcd.type === EmailPCDPackage.name) {
             const pcd = await EmailPCDPackage.deserialize(payload?.pcd.pcd);
             const verified =
               (await EmailPCDPackage.verify(pcd)) &&
               _.isEqual(pcd.proof.eddsaPCD.claim.publicKey, ZUPASS_PUBLIC_KEY);
+            
+            console.log("VERIFIED: ", verified);
             if (verified) {
               return {
                 actions: await feedActionsForEmail(
@@ -95,27 +96,27 @@ export async function initFeedHost() {
 }
 
 async function feedActionsForEmail(
-  emailAddress: string,
+  username: string,
   semaphoreId: string
 ): Promise<PCDAction[]> {
-  const ticketsForUser: Record<string, Ticket[]> = {};
+  const phrasesForUser: Record<string, SecretPhrase[]> = {};
 
-  const tickets = await loadTickets();
+  const phrases = await loadSecretPhrases();
 
-  for (const [folder, folderTickets] of Object.entries(tickets)) {
-    for (const ticket of folderTickets) {
-      if (ticket.attendeeEmail === emailAddress) {
-        if (!ticketsForUser[folder]) {
-          ticketsForUser[folder] = [];
+  for (const [folder, folderPhrases] of Object.entries(phrases)) {
+    for (const phrase of folderPhrases) {
+      if (phrase.username === username) {
+        if (!phrasesForUser[folder]) {
+          phrasesForUser[folder] = [];
         }
-        ticketsForUser[folder].push(ticket);
+        phrasesForUser[folder].push(phrase);
       }
     }
   }
 
   const actions = [];
 
-  for (const [folder, tickets] of Object.entries(ticketsForUser)) {
+  for (const [folder, phrases] of Object.entries(phrasesForUser)) {
     // Clear out the folder
     actions.push({
       type: PCDActionType.DeleteFolder,
@@ -127,7 +128,7 @@ async function feedActionsForEmail(
       type: PCDActionType.ReplaceInFolder,
       folder,
       pcds: await Promise.all(
-        tickets.map((ticket) => issueTicketPCD(ticket, semaphoreId))
+        phrases.map((phrase) => issueSecretWordPCD(phrase, semaphoreId))
       )
     });
   }
@@ -135,34 +136,27 @@ async function feedActionsForEmail(
   return actions;
 }
 
-async function issueTicketPCD(
-  ticket: Ticket,
+async function issueSecretWordPCD(
+  phrase: SecretPhrase,
   semaphoreId: string
-): Promise<SerializedPCD<EdDSATicketPCD>> {
-  const ticketData: ITicketData = {
-    ...ticket,
-    checkerEmail: "",
-    isConsumed: false,
-    isRevoked: false,
-    attendeeSemaphoreId: semaphoreId,
-    timestampConsumed: 0,
-    timestampSigned: Date.now()
-  };
-
-  const pcd = await EdDSATicketPCDPackage.prove({
-    ticket: {
-      value: ticketData,
-      argumentType: ArgumentTypeName.Object
+): Promise<SerializedPCD<SecretPhrasePCD>> {
+  const pcd = await SecretPhrasePCDPackage.prove({
+    phraseId: {
+      value: phrase.phraseId,
+      argumentType: ArgumentTypeName.Number,
     },
-    privateKey: {
-      value: process.env.SERVER_PRIVATE_KEY,
-      argumentType: ArgumentTypeName.String
+    username: {
+      value: phrase.username,
+      argumentType: ArgumentTypeName.String,
     },
-    id: {
-      value: undefined,
-      argumentType: ArgumentTypeName.String
-    }
-  });
-
-  return EdDSATicketPCDPackage.serialize(pcd);
+    secret: {
+      value: phrase.secret,
+      argumentType: ArgumentTypeName.String,
+    },
+    secretHash: {
+      value: phrase.secretHash,
+      argumentType: ArgumentTypeName.String,
+    },
+  })
+  return SecretPhrasePCDPackage.serialize(pcd);
 }

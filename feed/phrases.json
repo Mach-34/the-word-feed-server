@@ -1,0 +1,16 @@
+{
+  "First folder": [
+    {
+      "phraseId": "1",
+      "username": "jp4g@mach34.space",
+      "secret": "this is the secret",
+      "secretHash": "1293877483020118830302"
+    },
+    {
+      "phraseId": "1",
+      "username": "ianb",
+      "secret": "this is the secret",
+      "secretHash": "1293877483020118830302"
+    }
+  ]
+}
