@@ -36,7 +36,7 @@
     "@pcd/passport-interface": "^0.8.0",
     "@pcd/pcd-collection": "^0.8.0",
     "@pcd/pcd-types": "^0.8.0",
-    "@pcd/secret-phrase-pcd": "https://gitpkg.now.sh/Mach-34/zupass/packages/secret-phrase-pcd?main",
+    "@pcd/secret-phrase-pcd": "file:../zupass/packages/secret-phrase-pcd",
     "@pcd/semaphore-signature-pcd": "^0.8.0",
     "@types/url-join": "^4.0.2",
     "cors": "^2.8.5",

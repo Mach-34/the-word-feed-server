@@ -18,16 +18,15 @@ import {
 } from "@pcd/pcd-collection";
 import { ArgumentTypeName, SerializedPCD } from "@pcd/pcd-types";
 import { SecretPhrasePCD, SecretPhrasePCDPackage } from "@pcd/secret-phrase-pcd";
-import { SemaphoreSignaturePCDPackage } from "@pcd/semaphore-signature-pcd";
 import _ from "lodash";
 import path from "path";
 import { SecretPhrase, loadSecretPhrases } from "./config";
 import { ZUPASS_PUBLIC_KEY } from "./main";
 
 const fullPath = path.join(__dirname, "../artifacts/");
-SemaphoreSignaturePCDPackage.init?.({
-  zkeyFilePath: fullPath + "16.zkey",
-  wasmFilePath: fullPath + "16.wasm"
+SecretPhrasePCDPackage.init?.({
+  zkeyFilePath: fullPath + "circuit.zkey",
+  wasmFilePath: fullPath + "circuit.wasm"
 });
 
 EdDSAPCDPackage.init?.({});
@@ -43,8 +42,8 @@ export async function initFeedHost() {
       {
         feed: {
           id: "1",
-          name: "First feed",
-          description: "First test feed",
+          name: "The Word Phrases",
+          description: "Secret Phrases for \"The Word\"",
           permissions: folders.flatMap((folder) => {
             return [
               {
@@ -69,21 +68,13 @@ export async function initFeedHost() {
             throw new Error(`Missing credential`);
           }
           const { payload } = await verifyFeedCredential(req.pcd);
-          console.log("PAYLOAD::::: ", payload)
           if (payload?.pcd && payload.pcd.type === EmailPCDPackage.name) {
             const pcd = await EmailPCDPackage.deserialize(payload?.pcd.pcd);
             const verified =
               (await EmailPCDPackage.verify(pcd)) &&
               _.isEqual(pcd.proof.eddsaPCD.claim.publicKey, ZUPASS_PUBLIC_KEY);
-            
-            console.log("VERIFIED: ", verified);
             if (verified) {
-              return {
-                actions: await feedActionsForEmail(
-                  pcd.claim.emailAddress,
-                  pcd.claim.semaphoreId
-                )
-              };
+              return { actions: await feedActionsForEmail(pcd.claim.emailAddress) };
             }
           }
           return { actions: [] };
@@ -91,18 +82,17 @@ export async function initFeedHost() {
       }
     ],
     "http://localhost:3100/feeds",
-    "Test Feed Server"
+    "The Word Feed Server"
   );
 }
 
 async function feedActionsForEmail(
   username: string,
-  semaphoreId: string
 ): Promise<PCDAction[]> {
   const phrasesForUser: Record<string, SecretPhrase[]> = {};
 
   const phrases = await loadSecretPhrases();
-
+  console.log("A");
   for (const [folder, folderPhrases] of Object.entries(phrases)) {
     for (const phrase of folderPhrases) {
       if (phrase.username === username) {
@@ -113,7 +103,7 @@ async function feedActionsForEmail(
       }
     }
   }
-
+  console.log("B");
   const actions = [];
 
   for (const [folder, phrases] of Object.entries(phrasesForUser)) {
@@ -128,17 +118,16 @@ async function feedActionsForEmail(
       type: PCDActionType.ReplaceInFolder,
       folder,
       pcds: await Promise.all(
-        phrases.map((phrase) => issueSecretWordPCD(phrase, semaphoreId))
+        phrases.map((phrase) => issueSecretWordPCD(phrase))
       )
     });
   }
-
   return actions;
 }
 
+// can I just... verify instead of proving based on an input?
 async function issueSecretWordPCD(
   phrase: SecretPhrase,
-  semaphoreId: string
 ): Promise<SerializedPCD<SecretPhrasePCD>> {
   const pcd = await SecretPhrasePCDPackage.prove({
     phraseId: {
@@ -151,10 +140,6 @@ async function issueSecretWordPCD(
     },
     secret: {
       value: phrase.secret,
-      argumentType: ArgumentTypeName.String,
-    },
-    secretHash: {
-      value: phrase.secretHash,
       argumentType: ArgumentTypeName.String,
     },
   })

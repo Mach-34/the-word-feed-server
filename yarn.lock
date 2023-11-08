@@ -820,9 +820,8 @@
     styled-components "^5.3.9"
     uuid "^9.0.0"
 
-"@pcd/secret-phrase-pcd@https://gitpkg.now.sh/Mach-34/zupass/packages/secret-phrase-pcd?main":
+"@pcd/secret-phrase-pcd@file:../zupass/packages/secret-phrase-pcd":
   version "0.1.0"
-  resolved "https://gitpkg.now.sh/Mach-34/zupass/packages/secret-phrase-pcd?main#4afa81e5cf356fcb1f6e054047eb278c7dbb3291"
   dependencies:
     "@pcd/passport-ui" "0.8.0"
     "@pcd/pcd-types" "0.8.0"
